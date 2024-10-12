@@ -1,5 +1,5 @@
 from flask import Flask, render_template, Response, jsonify
-from camera import VideoCamera
+from detectron_camera import VideoCamera
 import cv2
 
 app = Flask(__name__)
