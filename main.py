@@ -1,9 +1,14 @@
 ## Simple Flask app to host an AI model
 from flask import Flask, request, jsonify
 import os
+import detectron_camera as dc
+from flask_cors import CORS
+import base64
+import cv2
 UPLOAD_FOLDER = './uploads'
 
 app = Flask(__name__)
+CORS(app) 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
@@ -31,8 +36,12 @@ def upload_image():
 
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], "img0" + file.filename[-4:])
         file.save(file_path)
-
-        return jsonify({'message': 'File uploaded successfully', 'filename': file.filename}), 201
+        detected, labels = dc.get_classes(file_path)
+        print(detected)
+        print(labels)
+        # _, buffer = cv2.imencode('.jpg', detected)  # or the appropriate image format
+        detected_image_base64 = base64.b64encode(detected).decode('utf-8')        
+        return jsonify({'message': 'File uploaded successfully', 'filename': file.filename, 'labels': labels, 'detected_image': detected_image_base64}), 200
     else:
         return jsonify({'error': 'File type not allowed'}), 400
 
