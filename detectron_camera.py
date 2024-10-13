@@ -3,6 +3,11 @@ import torch
 import torchvision
 import detectron2
 from detectron2.utils.logger import setup_logger
+from io import BytesIO
+
+from PIL import Image
+import io
+import base64
 setup_logger()
 
 import numpy as np
@@ -93,7 +98,60 @@ def get_classes(image_path):
     detected_frame, predicted_labels = predict_and_visualize(image, predictor, cfg)
 
     # Encode the frame as JPEG
-    ret, jpeg = cv2.imencode('.jpg', detected_frame)
+
+    success, jpeg = cv2.imencode('.jpg', detected_frame)
+
+    if success:
+        detected_path = "./uploads/detected.jpg"
+        
+        # Save the JPEG bytes to a file
+        with open(detected_path, 'wb') as f:
+            f.write(jpeg.tobytes())  # Convert the encoded image to bytes and write to the file
+        print(f"Image saved successfully at {detected_path}")
+    else:
+        print("Failed to encode image.")
     
     # Return the encoded image and predicted labels
-    return jpeg.tobytes(), predicted_labels
+    return jpeg, predicted_labels
+
+
+def resize_image(image, max_width, max_height):
+    # Open the image using PIL
+    img = Image.open(io.BytesIO(image))
+
+    # Get original dimensions
+    original_width, original_height = img.size
+
+    # Calculate aspect ratio
+    aspect_ratio = original_width / original_height
+
+    # Compute new dimensions based on the aspect ratio
+    if original_width > original_height:
+        new_width = min(max_width, original_width)
+        new_height = int(new_width / aspect_ratio)
+    else:
+        new_height = min(max_height, original_height)
+        new_width = int(new_height * aspect_ratio)
+
+    # Resize image
+    img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
+    buffered = BytesIO()
+    img.save(buffered, format="JPEG")  # You can choose the format based on your image type (e.g., JPEG, PNG)
+    img_bytes = buffered.getvalue()
+
+    return img_bytes
+
+
+if __name__ == "__main__":
+    # Test the get_classes function
+    test_image_path = "C:\\Users\\micha\\Downloads\\test2.jpg"  # Replace with an actual image path
+    try:
+        detected_image, labels = get_classes(test_image_path)
+        print(f"Detected Labels: {labels}")
+        # Save or show the detected image for validation
+        with open("detected_output.jpg", "wb") as f:
+            f.write(detected_image)
+        print("Detected image saved as 'detected_output.jpg'")
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
