@@ -74,6 +74,16 @@
 
 <body>
     <div class="container mt-5">
+        {% if username %}
+            <div class="text-right mb-3">
+                <span class="btn btn-outline-primary">Welcome, {{ username }}!</span>
+            </div>
+        {% else %}
+            <div class="text-right mb-3">
+                <button type="button" class="btn btn-outline-primary" id="loginButton" onclick="window.location.href='/login';">Login</button>
+            </div>
+        {% endif %}
+
         <h2 class="text-center">Is Your Item Recyclable?</h2>
 
         <p class="description">Upload an image of an item, or take a photo directly to find out if it's recyclable.</p>

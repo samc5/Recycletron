@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Sign Up</title>
+    <style>
+        body {
+            background-color: #e3f2fd; /* Light baby blue background */
+            font-family: 'Roboto', sans-serif; /* Soft, modern font */
+        }
+
+        h2 {
+            color: #0275d8; /* Deeper blue for the title */
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            margin: auto;
+        }
+
+        .form-group label {
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background-color: #0275d8;
+            border-color: #0275d8;
+        }
+
+        .btn-primary:hover {
+            background-color: #025aa5;
+        }
+
+        .description {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center">Sign Up</h2>
+        <p class="description">Create your account by filling out the form below.</p>
+
+        <form action="/signup" method="post" class="mt-4" onsubmit="return validateForm()">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
+        </form>
+
+        <div class="text-center mt-3">
+            <a href="/login">Already have an account? Login here.</a>
+        </div>
+
+        <div class="text-center mt-3">
+            <a href="/">Go back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        function validateForm() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+
+            if (password !== confirmPassword) {
+                alert('Passwords do not match. Please try again.');
+                return false; // Prevent form submission
+            }
+
+            return true; // Allow form submission
+        }
+    </script>
+</body>
+
+</html>
