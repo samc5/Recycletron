@@ -1,11 +1,22 @@
 ## Simple Flask app to host an AI model
 from flask import Flask, request, jsonify
 import os
+import detectron_camera as dc
+from flask_cors import CORS
+import base64
+import cv2
+from flask import render_template
+
 UPLOAD_FOLDER = './uploads'
 
 app = Flask(__name__)
+CORS(app) 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+
+@app.route('/')
+def index():
+    return render_template('uploads3.html', labels=None, detected_image=None)  # Serve the HTML form
 
 @app.route('/model', methods=['POST'])
 def run_model():
@@ -31,8 +42,15 @@ def upload_image():
 
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], "img0" + file.filename[-4:])
         file.save(file_path)
+        print(f"File saved to: {file_path}")
+        detected, labels = dc.get_classes(file_path)
+        print(detected)
+        print(labels)
+        # _, buffer = cv2.imencode('.jpg', detected)  # or the appropriate image format
 
-        return jsonify({'message': 'File uploaded successfully', 'filename': file.filename}), 201
+        detected_image_base64 = base64.b64encode(detected).decode('utf-8')      
+        return render_template('index.html', detected_image=detected_image_base64, labels=labels)  
+        return jsonify({'message': 'File uploaded successfully', 'filename': file.filename, 'labels': labels, 'detected_image': detected_image_base64}), 200
     else:
         return jsonify({'error': 'File type not allowed'}), 400
 
