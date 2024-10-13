@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Upload Image for Recycling Detection</title>
+    <style>
+        body {
+            background-color: #e3f2fd; /* Light baby blue background */
+            font-family: 'Roboto', sans-serif; /* Soft, modern font */
+        }
+
+        h2 {
+            color: #0275d8; /* Deeper blue for the title */
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group label {
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background-color: #0275d8;
+            border-color: #0275d8;
+        }
+
+        .btn-primary:hover {
+            background-color: #025aa5;
+        }
+
+        #result img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+
+        .description {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: #555;
+        }
+
+        .markdown-preview {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 20px;
+            background-color: #f8f9fa;
+        }
+
+        #camera {
+            display: none;
+            margin-top: 20px;
+        }
+
+        video {
+            max-width: 100%;
+            border-radius: 10px;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center">Is Your Item Recyclable?</h2>
+
+        <p class="description">Upload an image of an item, or take a photo directly to find out if it's recyclable.</p>
+
+        <form action="/upload" method="post" enctype="multipart/form-data" class="mt-4">
+            <div class="form-group">
+                <label for="file_field">Select Image</label>
+                <input type="file" class="form-control-file" id="file_field" name="file_field" required>
+            </div>
+            <button type="button" class="btn btn-secondary btn-block" id="cameraButton">Use Camera</button>
+            <div id="camera" class="mt-4">
+                <video id="video" autoplay></video>
+                <button type="button" class="btn btn-primary btn-block" id="snapButton">Capture Photo</button>
+                <canvas id="canvas" style="display:none;"></canvas>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" id="uploadButton">Upload</button>
+        </form>
+
+        <h3 class="mt-5">How Does It Work?</h3>
+        <div id="markdownPreview" class="markdown-preview mt-3">
+            <h5>Step 1:</h5>
+            <p>Upload an image of your item or capture a photo using the camera.</p>
+            <h5>Step 2:</h5>
+            <p>Our algorithm processes the image to identify recyclable materials.</p>
+            <h5>Step 3:</h5>
+            <p>Receive feedback on whether your item is recyclable.</p>
+        </div>
+
+        <div id="result" class="mt-4">
+            {% if labels %}
+                <div class="alert alert-success">
+                    <h5>Detected Labels:</h5>
+                    <ul>
+                        {% for label in labels %}
+                            <li>{{ label }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            {% if detected_image %}
+                <div class="card mt-3">
+                    <img src="data:image/jpeg;base64,{{ detected_image }}" class="card-img-top" alt="Detected Image">
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Access the camera
+        const video = document.getElementById('video');
+        const cameraButton = document.getElementById('cameraButton');
+        const snapButton = document.getElementById('snapButton');
+        const canvas = document.getElementById('canvas');
+        const uploadButton = document.getElementById('uploadButton');
+        const fileField = document.getElementById('file_field');
+
+        // Start the camera
+        cameraButton.addEventListener('click', async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            video.style.display = 'block';
+            document.getElementById('camera').style.display = 'block';
+        });
+
+        // Capture the photo
+        snapButton.addEventListener('click', () => {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert the captured photo to a Blob and create a File object
+            canvas.toBlob(blob => {
+                const file = new File([blob], 'captured_image.jpg', { type: 'image/jpeg' });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileField.files = dataTransfer.files;
+
+                // Show a message that the photo has been captured
+                alert('Photo captured! You can now upload.');
+            });
+        });
+    </script>
+</body>
+
+</html>

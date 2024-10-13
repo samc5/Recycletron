@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Upload Image for Recycling Detection</title>
+    <style>
+        body {
+            background-color: #e3f2fd; /* Light baby blue background */
+            font-family: 'Roboto', sans-serif; /* Soft, modern font */
+        }
+
+        h2 {
+            color: #0275d8; /* Deeper blue for the title */
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group label {
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background-color: #0275d8;
+            border-color: #0275d8;
+        }
+
+        .btn-primary:hover {
+            background-color: #025aa5;
+        }
+
+        #result img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+
+        /* Space for the description section */
+        .description {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: #555;
+        }
+
+        /* Rounded corners for result card */
+        .card {
+            border-radius: 10px;
+        }
+
+        /* Styling for detected labels */
+        .alert-success ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .alert-success li {
+            font-size: 1.2rem;
+            color: #555;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center">The Recylotron!</h2>
+
+        <!-- Description section to explain what the app does -->
+        <p class="description">Upload an image of an item, and we'll tell you if it's recyclable or not. Get started by selecting an image below.</p>
+
+        <!-- Form for image upload -->
+        
+        <form action="/upload" method="post" enctype="multipart/form-data" class="mt-4">
+            <div class="form-group">
+                <label for="file_field">Select Image</label>
+                <input type="file" class="form-control-file" id="file_field" name="file_field" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Upload</button>
+        </form>
+        
+        <h3 class="mt-5">How Does It Work?</h3>
+        <div id="markdownPreview" class="markdown-preview mt-3">
+            <!-- Predefined Markdown content -->
+            <h5>Step 1:</h5>
+            <p>Upload an image of your item.</p>
+            <h5>Step 2:</h5>
+            <p>Our algorithm processes the image to identify recyclable materials.</p>
+            <h5>Step 3:</h5>
+            <p>Receive feedback on whether your item is recyclable.</p>
+        </div>
+
+        <div id="markdownPreview" class="markdown-preview mt-3"></div>
+        <!-- Result section inside the main container -->
+        <div id="result" class="mt-4">
+            {% if labels %}
+                <div class="alert alert-success">
+                    <h5>Detected Labels:</h5>
+                    <ul>
+                        {% for label in labels %}
+                            <li>{{ label }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <!-- Show detected image -->
+            {% if detected_image %}
+                <div class="card mt-3">
+                    <img src="data:image/jpeg;base64,{{ detected_image }}" class="card-img-top" alt="Detected Image">
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Bootstrap and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Preview the markdown input
+        document.getElementById('previewBtn').addEventListener('click', function () {
+            const markdownText = document.getElementById('markdownInput').value;
+            document.getElementById('markdownPreview').innerHTML = marked(markdownText);
+        });
+    </script>
+
+</body>
+
+</html>
