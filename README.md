@@ -8,5 +8,6 @@ Usage:
 4. Using a camera to real-time classify between recyclable vs. non-recyclable items.
 
 Tech Stack:
-- Web App (Flask, sqlite3, Python)
-- Meta’s detectron2 object identification model
+Meta’s detectron2 object identification model
+Flask, Python for backend implementation
+HTML, Javascript for frontend
