@@ -77,7 +77,7 @@ class VideoCamera(object):
         return jpeg.tobytes()
 
 # Function to process a static image file
-def get_classes(image_path):
+def get_classes(image_path, dest_path):
     # Read the image from the file path
     image = cv2.imread(image_path)
     
@@ -102,12 +102,10 @@ def get_classes(image_path):
     success, jpeg = cv2.imencode('.jpg', detected_frame)
 
     if success:
-        detected_path = "./uploads/detected.jpg"
-        
         # Save the JPEG bytes to a file
-        with open(detected_path, 'wb') as f:
+        with open(dest_path, 'wb') as f:
             f.write(jpeg.tobytes())  # Convert the encoded image to bytes and write to the file
-        print(f"Image saved successfully at {detected_path}")
+        print(f"Image saved successfully at {dest_path}")
     else:
         print("Failed to encode image.")
     

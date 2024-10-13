@@ -6,6 +6,7 @@ from flask_cors import CORS
 import base64
 import cv2
 from flask import render_template
+from datetime import datetime
 
 UPLOAD_FOLDER = './uploads'
 
@@ -38,21 +39,24 @@ def upload_image():
         return jsonify({'error': 'No selected file'}), 400
 
     if file and allowed_file(file.filename):
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        base_filename = f"img_{timestamp}"
+
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], "img0" + file.filename[-4:])
-        file.save(file_path)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{base_filename}{file.filename[-4:]}")
+        file.save(file_path) # Save the original file to the uploads folder
         print(f"File saved to: {file_path}")
 
-        detected, labels = dc.get_classes(file_path) # returns a jpeg of detected
+        detected_image_path = os.path.join(app.config['UPLOAD_FOLDER'], f"detected_{base_filename}.jpg")
 
-        detected_image_path = os.path.join(app.config['UPLOAD_FOLDER'], 'detected.jpg')
+        detected, labels = dc.get_classes(file_path, detected_image_path) # returns a jpeg of detected
 
         print(f"Detected image path: {detected_image_path}")
 
         # Return the labels and the path to the detected image
-        print(url_for('uploaded_file', filename='detected.jpg'))
-        return jsonify({'labels': labels, 'detected_image': url_for('uploaded_file', filename='detected.jpg')}), 200
+        # print(url_for('uploaded_file', filename='detected.jpg'))
+        return jsonify({'labels': labels, 'detected_image': url_for('uploaded_file', filename=f"detected_{base_filename}.jpg")}), 200
 
         # detected_path = "./uploads/detected.jpg"
 
