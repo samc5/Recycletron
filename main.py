@@ -1,11 +1,12 @@
 ## Simple Flask app to host an AI model
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory, url_for
 import os
 import detectron_camera as dc
 from flask_cors import CORS
 import base64
 import cv2
 from flask import render_template
+from datetime import datetime
 
 UPLOAD_FOLDER = './uploads'
 
@@ -38,22 +39,47 @@ def upload_image():
         return jsonify({'error': 'No selected file'}), 400
 
     if file and allowed_file(file.filename):
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        base_filename = f"img_{timestamp}"
+
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], "img0" + file.filename[-4:])
-        file.save(file_path)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{base_filename}{file.filename[-4:]}")
+        file.save(file_path) # Save the original file to the uploads folder
         print(f"File saved to: {file_path}")
-        detected, labels = dc.get_classes(file_path)
-        print(detected)
-        print(labels)
-        # _, buffer = cv2.imencode('.jpg', detected)  # or the appropriate image format
 
-        detected_image_base64 = base64.b64encode(detected).decode('utf-8')      
-        return render_template('index.html', detected_image=detected_image_base64, labels=labels)  
-        return jsonify({'message': 'File uploaded successfully', 'filename': file.filename, 'labels': labels, 'detected_image': detected_image_base64}), 200
+        detected_image_path = os.path.join(app.config['UPLOAD_FOLDER'], f"detected_{base_filename}.jpg")
+
+        detected, labels = dc.get_classes(file_path, detected_image_path) # returns a jpeg of detected
+
+        print(f"Detected image path: {detected_image_path}")
+
+        # Return the labels and the path to the detected image
+        # print(url_for('uploaded_file', filename='detected.jpg'))
+        return jsonify({'labels': labels, 'detected_image': url_for('uploaded_file', filename=f"detected_{base_filename}.jpg")}), 200
+
+        # detected_path = "./uploads/detected.jpg"
+
+        # with open(detected_path, 'wb') as f:
+        #     f.write(detected)
+
+        # detected.save(detected_scaled_path)
+        # detected_scaled = dc.resize_image(detected, 500, 400)
+
+        #_, buffer = cv2.imencode('.jpg', detected)  # or the appropriate image format
+        #detected_image_base64 = base64.b64encode(detected).decode('utf-8')
+        #detected_image_base64 = base64.b64encode(detected_scaled).decode('utf-8')
+
+        # Save the JPEG-encoded image to the file path
+        
+        # return render_template('index.html', detected_image=detected_image_base64, labels=labels)  
+        # return jsonify({'message': 'File uploaded successfully', 'filename': file.filename, 'labels': labels, 'detected_image': detected_image_base64}), 200
     else:
         return jsonify({'error': 'File type not allowed'}), 400
 
+@app.route('/uploads/<path:filename>', methods=['GET'])
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)

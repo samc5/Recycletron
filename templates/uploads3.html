@@ -9,6 +9,12 @@
     <style>
         body {
             background-color: #e3f2fd; /* Light baby blue background */
+            display: flex; /* Make the body a flex container */
+            flex-direction: column; /* Stack child elements vertically */
+            justify-content: center; /* Center the image container horizontally */
+            align-items: center; /* Center the image container vertically */
+            min-height: 100vh; /* Full viewport height for vertical centering */
+            margin: 0; /* Remove default margin */
             font-family: 'Roboto', sans-serif; /* Soft, modern font */
         }
 
@@ -23,6 +29,12 @@
             padding: 40px;
             border-radius: 10px;
             box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+            margin: auto; /* Automatically adjust margins for centering */
+            flex-grow: 1; /* Allow the container to grow and take available space */
+            display: flex; /* Use flexbox for alignment */
+            flex-direction: column; /* Ensure children stack vertically */
+            align-items: center; /* Center children horizontally */
+            justify-content: center; /* Center children vertically */
         }
 
         .form-group label {
@@ -38,10 +50,22 @@
             background-color: #025aa5;
         }
 
-        #result img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 10px;
+        #image-container {
+            width: 700px; /* Set a fixed width */
+            height: 600px; /* Set a fixed height */
+            overflow: hidden; /* Hide any overflow */
+            display: flex; /* Use flexbox for alignment */
+            justify-content: center; /* Center the image horizontally */
+            align-items: center; /* Center the image vertically */
+            border: 1px solid #ddd; /* Optional: add a border */
+            border-radius: 10px; /* Optional: round the corners */
+            background-color: #f8f9fa; /* Optional: background color */
+        }
+
+        #image-container img {
+            max-width: 100%; /* Limit the image width to container width */
+            max-height: 100%; /* Limit the image height to container height */
+            object-fit: contain; /* Maintain aspect ratio without clipping */
         }
 
         .description {
@@ -73,7 +97,7 @@
 </head>
 
 <body>
-    <div class="container mt-5">
+    <div class="container">
         <h2 class="text-center">Is Your Item Recyclable?</h2>
 
         <p class="description">Upload an image of an item, or take a photo directly to find out if it's recyclable.</p>
@@ -113,23 +137,33 @@
                     </ul>
                 </div>
             {% endif %}
-            {% if detected_image %}
-                <div class="card mt-3">
-                    <img src="data:image/jpeg;base64,{{ detected_image }}" class="card-img-top" alt="Detected Image">
-                </div>
+            <!-- {% if detected_image %}
+                <div id="image-container"> -->
+                    <!-- <img src="data:image/jpeg;base64,{{ detected_image }}" alt="Detected Image"> -->
+                    <!-- <img src="uploads/test2.jpg" alt="Detected Image"> -->
+                    <!-- <img src="{{ url_for('uploaded_file', filename='detected.jpg') }}" alt="Detected Image"> -->
+                    <!-- <img src="{{ detected_image }}" alt="Detected Image"> -->
+                    <!-- <img src="{{ url_for('uploaded_file', filename='detected.jpg') }}" class="card-img-top" alt="Detected Image">
+                </div> -->
+            <!-- {% else %}
+                <div id="image-container">
+                    <img src="{{ url_for('static', filename='uploads/test2.jpg') }}" alt="Static Image">
+                </div> -->
             {% endif %}
         </div>
     </div>
 
     <script>
-        // Access the camera
+        let lastDetectedImage = '';
+        let lastLabels = [];
+        
         const video = document.getElementById('video');
         const cameraButton = document.getElementById('cameraButton');
         const snapButton = document.getElementById('snapButton');
         const canvas = document.getElementById('canvas');
-        const uploadButton = document.getElementById('uploadButton');
-        const fileField = document.getElementById('file_field');
-
+        const resultDiv = document.getElementById('result');
+        const form = document.querySelector('form');
+        
         // Start the camera
         cameraButton.addEventListener('click', async () => {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -137,26 +171,98 @@
             video.style.display = 'block';
             document.getElementById('camera').style.display = 'block';
         });
-
-        // Capture the photo
+    
         snapButton.addEventListener('click', () => {
             const context = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
+    
             // Convert the captured photo to a Blob and create a File object
             canvas.toBlob(blob => {
-                const file = new File([blob], 'captured_image.jpg', { type: 'image/jpeg' });
-                const dataTransfer = new DataTransfer();
-                dataTransfer.items.add(file);
-                fileField.files = dataTransfer.files;
+                const formData = new FormData();
+                formData.append('file_field', blob, 'captured_image.jpg');
+    
+                // Send the image to the server
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
 
-                // Show a message that the photo has been captured
-                alert('Photo captured! You can now upload.');
-            });
+                // Inside the .then block after image upload
+                .then(data => {
+                if (data.detected_image) {
+                    lastDetectedImage = data.detected_image;
+                    lastLabels = data.labels;
+
+                    // Update the result div with new data
+                    resultDiv.innerHTML = `
+                    <h5>Detected Labels:</h5>
+                    <ul>
+                        ${lastLabels.map(label => `<li>${label}</li>`).join('')}
+                    </ul>
+                    <div id="image-container">
+                        <img src="${lastDetectedImage}" alt="Detected Image">
+                    </div>
+                `;
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+
+            .catch(err => console.error('Error:', err));
+        });
+    
+            // Stop the video stream after capturing
+            const stream = video.srcObject;
+            if (stream) {
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+            }
+            video.style.display = 'none';
+        });
+    
+        // Handle form submission for uploaded images
+        
+        form.addEventListener('submit', function (event) {
+            event.preventDefault(); // Prevent normal form submission
+            const formData = new FormData(this);
+            
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json()) // Expecting JSON back
+            .then(data => {
+                // Display the detected image and labels
+                if (data.detected_image) {
+                // Create a new section for the new result
+                const resultDiv = document.createElement('div');
+                resultDiv.classList.add('result-item');
+
+                resultDiv.innerHTML = `
+                <h5>Detected Labels:</h5>
+                <ul>
+                    ${data.labels.map(label => `<li>${label}</li>`).join('')}
+                </ul>
+                <div id="image-container">
+                    <img src="${data.detected_image}" alt="Detected Image">
+                </div>
+            `;
+
+                // Append to the result div
+                document.getElementById('result').appendChild(resultDiv);
+            } else {
+                alert('Error: ' + data.error);
+            }
+
+            })
+            .catch(err => console.error('Error:', err));
         });
     </script>
+    
 </body>
 
 </html>
+
