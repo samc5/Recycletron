@@ -120,7 +120,4 @@ def upload_image():
 
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.drop_all()  # This will drop all tables
-        db.create_all()  # This will create the tables again
     app.run(host='0.0.0.0')
